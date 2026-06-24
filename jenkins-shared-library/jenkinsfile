@@ -28,8 +28,8 @@ pipeline {
 
     environment {
         APP_NAME = 'sample-application'
-
-        GIT_URL = 'https://github.com/username/sample-application.git'
+        IMAGE_NAME = "thanikai1/${APP_NAME}:${params.IMAGE_TAG}"
+        GIT_URL = 'https://github.com/ThanikaiCloudevops/sample-application.git'
         GIT_CREDENTIALS = 'github_id'
         DOCKER_CREDENTIALS = 'docker_cred_id'
     }
