@@ -1,6 +1,7 @@
 @Library('shared-library') _
+
 pipeline {
-    agent any 
+    agent any
 
     options {
         buildDiscarder(logRotator(
@@ -10,7 +11,6 @@ pipeline {
 
         disableConcurrentBuilds()
         timestamps()
-        // ansiColor('xterm')
 
         timeout(
             time: 30,
@@ -22,16 +22,18 @@ pipeline {
         string(
             name: 'IMAGE_TAG',
             defaultValue: 'latest',
-            description: 'Image tag to build'
+            description: 'Docker image tag'
         )
     }
+
     environment {
         APP_NAME = 'sample-application'
-        IMAGE_NAME= 'thanikai1/${APP_NAME}:${params.IMAGE_TAG}'
-        GIT_URL = 
-        GIT_CREDENTAILS =
-        DOCKER_CREDENTIALS =
+
+        GIT_URL = 'https://github.com/username/sample-application.git'
+        GIT_CREDENTIALS = 'github-creds-id'
+        DOCKER_CREDENTIALS = 'dockerhub-creds-id'
     }
+
     stages {
 
         stage('Clean Workspace') {
@@ -43,8 +45,8 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 gitCheckout(
-                    giturl: env.GIT_URL ,
-                    credentialsId: env.GIT_CREDENTAILS,
+                    giturl: env.GIT_URL,
+                    credentialsId: env.GIT_CREDENTIALS,
                     branch: '*/development'
                 )
             }
@@ -52,62 +54,52 @@ pipeline {
 
         stage('Build Docker') {
             steps {
-                sh """
-                    docker build -t ${FULL_IMAGE_NAME} .
-                """
+                script {
+                    IMAGE_NAME = "thanikai1/${env.APP_NAME}:${params.IMAGE_TAG}"
+                    dockerBuild(IMAGE_NAME)
+                }
             }
         }
 
         stage('Docker Login') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: env.DOCKER_CREDENTIALS_ID,
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )
-                ]) {
-                    sh """
-                        echo "\$DOCKER_PASS" | docker login \
-                        -u "\$DOCKER_USER" \
-                        --password-stdin
-                    """
-                }
+                dockerLogin(env.DOCKER_CREDENTIALS)
             }
         }
 
         stage('Docker Push') {
             steps {
-                sh """
-                    docker push ${FULL_IMAGE_NAME}
-                """
-            }
-        }
-
-        stage('Remove Existing Container') {
-            steps {
-                sh """
-                    docker rm -f ${CONTAINER_NAME} || true
-                """
+                script {
+                    IMAGE_NAME = "thanikai1/${env.APP_NAME}:${params.IMAGE_TAG}"
+                    dockerPush(IMAGE_NAME)
+                }
             }
         }
 
         stage('Deploy Container') {
             steps {
-                sh """
-                    docker run -d \
-                    --name ${CONTAINER_NAME} \
-                    -p ${APP_PORT}:3000 \
-                    --restart unless-stopped \
-                    ${FULL_IMAGE_NAME}
-                """
+                deployApp()
             }
         }
 
         stage('Docker Cleanup') {
             steps {
-                sh 'docker image prune -f'
+                cleanUp()
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully'
+        }
+
+        failure {
+            echo 'Pipeline failed'
+        }
+
+        always {
+            cleanWs()
         }
     }
 }
