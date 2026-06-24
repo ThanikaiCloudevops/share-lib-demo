@@ -30,7 +30,7 @@ pipeline {
         APP_NAME = 'sample-application'
 
         GIT_URL = 'https://github.com/username/sample-application.git'
-        GIT_CREDENTIALS = 'github-creds-id'
+        GIT_CREDENTIALS = 'github_id'
         DOCKER_CREDENTIALS = 'docker_cred_id'
     }
 
