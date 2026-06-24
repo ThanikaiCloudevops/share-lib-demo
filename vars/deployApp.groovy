@@ -5,7 +5,7 @@ def call(){
 
         sleep 20
 
-        sudo systemctl status sample-application  --no-pager
+        sudo systemctl status sample-application.service
 
         docker ps
     
