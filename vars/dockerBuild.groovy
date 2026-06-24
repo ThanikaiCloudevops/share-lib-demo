@@ -1,5 +1,5 @@
-def call(String imageName){
-    sh '''
+def call(String imageName) {
+    sh """
         docker build -t ${imageName} .
-    '''
+    """
 }
