@@ -1,8 +1,6 @@
 def call(){
     sh '''
     
-        // sudo systemctl daemon-reload
-
         sudo systemctl restart sample-application
 
         sleep 20
